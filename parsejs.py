@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from io import StringIO
 import argparse
 import string
 import sys
@@ -164,6 +165,9 @@ if (__name__ == "__main__"):
         "--ignore", "-i", default="",
         help="Tokens to ignore in output (comma separated)")
     parser.add_argument(
+        "--nice", "-N", action="store_true", default=False,
+        help="Attempts to make the output easier to read")
+    parser.add_argument(
         "--search", "-s", default="",
         help="Only output tokens matching the given search string")
     parser.add_argument(
@@ -172,6 +176,12 @@ if (__name__ == "__main__"):
     args = parser.parse_args()
 
     ignore = args.ignore.split(",")
+    if (args.nice): 
+        end = " "
+        out_stream = StringIO()
+    else: 
+        end = None
+        out_stream = sys.stdout
 
     for src in args.src:
         if (src == "-"):
@@ -189,11 +199,23 @@ if (__name__ == "__main__"):
             if (args.names):
                 # Only printing name-like things
                 if (token_type == "symbol"):
-                    print(token)
+                    print(token, end=end, file=out_stream)
             elif (args.comments):
                 # Only printing comments
                 if (token_type == "comment"):
-                    print(token)
+                    print(token, end=end, file=out_stream)
             else:
                 # Print everything
-                print(token)
+                print(token, end=end, file=out_stream)
+
+    if (args.nice):
+        txt = out_stream.getvalue()
+        txt = txt.replace(' ( ', '(').replace(' ) ', ')')
+        txt = txt.replace(' [ ', '[').replace(' ] ', ']')
+        txt = txt.replace(' ,', ',')
+        txt = txt.replace(' . ', '.')
+        txt = txt.replace(';', ';\n').replace(' ;', ';')
+        txt = txt.replace('{ ', '{\n')
+        txt = txt.replace('} ', '}\n')
+        print(txt)
+
